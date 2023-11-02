@@ -1,5 +1,6 @@
 package com.test.httpurlconnection;
 
+import android.os.Build;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -104,6 +105,12 @@ public class MainActivity extends AppCompatActivity {
         builder.append(urlConnection.getContentLength());
         builder.append("\n");
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            builder.append("Content Length Long: ");
+            builder.append(urlConnection.getContentLengthLong());
+            builder.append("\n");
+        }
+
         builder.append("Date: ");
         builder.append(urlConnection.getDate());
         builder.append("\n");
@@ -155,9 +162,11 @@ public class MainActivity extends AppCompatActivity {
         builder.append(urlConnection.getHeaderFieldDate("Date", -1));
         builder.append("\n");
 
-        builder.append("Header Field as Long: ");
-        builder.append(urlConnection.getHeaderFieldLong("X-Android-Sent-Millis", -1));
-        builder.append("\n");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            builder.append("Header Field as Long: ");
+            builder.append(urlConnection.getHeaderFieldLong("X-Android-Sent-Millis", -1));
+            builder.append("\n");
+        }
 
         builder.append("Header Field as Int: ");
         builder.append(urlConnection.getHeaderFieldInt("X-Android-Sent-Millis", -1));
@@ -213,6 +222,12 @@ public class MainActivity extends AppCompatActivity {
         builder.append(httpURLConnection.getContentLength());
         builder.append("\n");
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            builder.append("Content Length Long: ");
+            builder.append(httpURLConnection.getContentLengthLong());
+            builder.append("\n");
+        }
+
         builder.append("Date: ");
         builder.append(httpURLConnection.getDate());
         builder.append("\n");
@@ -264,9 +279,11 @@ public class MainActivity extends AppCompatActivity {
         builder.append(httpURLConnection.getHeaderFieldDate("Date", -1));
         builder.append("\n");
 
-        builder.append("Header Field as Long: ");
-        builder.append(httpURLConnection.getHeaderFieldLong("X-Android-Sent-Millis", -1));
-        builder.append("\n");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            builder.append("Header Field as Long: ");
+            builder.append(httpURLConnection.getHeaderFieldLong("X-Android-Sent-Millis", -1));
+            builder.append("\n");
+        }
 
         builder.append("Header Field as Int: ");
         builder.append(httpURLConnection.getHeaderFieldInt("X-Android-Sent-Millis", -1));
@@ -322,6 +339,12 @@ public class MainActivity extends AppCompatActivity {
         builder.append(httpsURLConnection.getContentLength());
         builder.append("\n");
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            builder.append("Content Length Long: ");
+            builder.append(httpsURLConnection.getContentLengthLong());
+            builder.append("\n");
+        }
+
         builder.append("Date: ");
         builder.append(httpsURLConnection.getDate());
         builder.append("\n");
@@ -376,9 +399,11 @@ public class MainActivity extends AppCompatActivity {
         builder.append(httpsURLConnection.getHeaderFieldDate("Date", -1));
         builder.append("\n");
 
-        builder.append("Header Field as Long: ");
-        builder.append(httpsURLConnection.getHeaderFieldLong("X-Android-Sent-Millis", -1));
-        builder.append("\n");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            builder.append("Header Field as Long: ");
+            builder.append(httpsURLConnection.getHeaderFieldLong("X-Android-Sent-Millis", -1));
+            builder.append("\n");
+        }
 
         builder.append("Header Field as Int: ");
         builder.append(httpsURLConnection.getHeaderFieldInt("X-Android-Sent-Millis", -1));
