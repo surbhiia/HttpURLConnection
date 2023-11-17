@@ -69,6 +69,18 @@ dependencies {
     androidTestImplementation(libs.ui.test.junit4)
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)
-    byteBuddy("io.opentelemetry.android:httpurlconnection-agent:0.2.23-SNAPSHOT")
-    api("io.opentelemetry.android:httpurlconnection-library:0.2.23-SNAPSHOT")
+    byteBuddy("io.opentelemetry.android:httpurlconnection-agent:0.3.2-SNAPSHOT")
+    api("io.opentelemetry.android:httpurlconnection-library:0.3.2-SNAPSHOT")
+
+    //implementation("org.jetbrains.kotlin:kotlin-stdlib:1.2.41")
+    androidTestImplementation("org.testng:testng:6.9.6")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
+    testImplementation("org.mockito:mockito-core:5.6.0")
+
+    implementation("io.opentelemetry:opentelemetry-api:1.31.0")
+    implementation("io.opentelemetry:opentelemetry-sdk:1.31.0")
+    implementation("io.opentelemetry:opentelemetry-sdk-trace:1.31.0")
+    implementation("io.opentelemetry:opentelemetry-sdk-testing:1.31.0")
+    implementation("io.opentelemetry:opentelemetry-context:1.31.0")
 }

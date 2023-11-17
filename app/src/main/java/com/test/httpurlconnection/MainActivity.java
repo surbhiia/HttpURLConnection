@@ -2,12 +2,13 @@ package com.test.httpurlconnection;
 
 import android.os.Build;
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -20,16 +21,35 @@ import java.net.URLConnection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.instrumentation.library.httpurlconnection.HttpUrlInstrumentationConfig;
+import io.opentelemetry.sdk.OpenTelemetrySdk;
+import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter;
+import io.opentelemetry.sdk.trace.SdkTracerProvider;
+import io.opentelemetry.sdk.trace.data.SpanData;
+import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor;
+
 public class MainActivity extends AppCompatActivity {
+
+    private static InMemorySpanExporter spanExporter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Button button = findViewById(R.id.simpleButton1);
+
+        //Span Exporter
+        setUpInMemorySpanExporter();
+
+        //Idle Connection reporter
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(HttpUrlInstrumentationConfig.getReportIdleConnectionRunnable(), 0, HttpUrlInstrumentationConfig.getReportIdleConnectionInterval(), TimeUnit.MILLISECONDS);
 
         button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -44,26 +64,51 @@ public class MainActivity extends AppCompatActivity {
                             urlConnectionAPIsWithHttps();
 
                             //Test for APIs overriden and new APIs added in HttpURLConnection
-                            httpURLConnectionAPIs();
-                            httpURLConnectionAPIsWithHttps();
+                             httpURLConnectionAPIs();
+                             httpURLConnectionAPIsWithHttps();
 
                             //getOutputStream Test
                             urlConnectionPost();
                             httpUrlConnectionPost();
                             httpsUrlConnectionPost();
+                            httpUrlConnectionPostWithoutRead();
 
                             //getErrorStreamTest
                             httpURLConnectionErrorStream();
                             httpsURLConnectionErrorStream();
+
+                            testTracesGenerated();
 
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                     }
                 }).start();
+
                 showToast();
+
+                Runnable runnable = new Runnable() {
+                    @Override
+                    public void run(){
+                        testTracesGenerated();
+                    }
+                };
+
+                Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(runnable, 0, 15000, TimeUnit.MILLISECONDS);
+
             }
         });
+    }
+
+    private void testTracesGenerated() {
+        List<SpanData> spans = spanExporter.getFinishedSpanItems();
+        Log.d("testTracesGenerated", "Size of overall spans generated: " + spans.size());
+        for(int i = 0 ; i < spans.size() ; i++){
+            SpanData span = spans.get(i);
+            Log.d("testTracesGenerated", "Span " + i + "th data is: "+ span.toString());
+        }
+
+        //spanExporter.reset();
     }
 
     public void urlConnectionAPIs() throws IOException {
@@ -180,7 +225,7 @@ public class MainActivity extends AppCompatActivity {
             builder.append(line);
         }
         builder.append("\n");
-
+        in.close();
         Log.d("URLConnectionAPIs", " " + builder);
     }
 
@@ -297,6 +342,7 @@ public class MainActivity extends AppCompatActivity {
             builder.append(line);
         }
         builder.append("\n");
+        in.close();
 
         Log.d("urlConnectionAPIsWithHttp", " " + builder);
     }
@@ -417,6 +463,7 @@ public class MainActivity extends AppCompatActivity {
             builder.append(line);
         }
         builder.append("\n");
+        in.close();
 
         Log.d("urlConnectionAPIsWithHttps", " " + builder);
     }
@@ -485,7 +532,7 @@ public class MainActivity extends AppCompatActivity {
             builder.append(line);
         }
         builder.append("\n");
-
+        inputStream.close();
         Log.d("URLConnectionPost", " " + builder);
     }
 
@@ -515,8 +562,18 @@ public class MainActivity extends AppCompatActivity {
             builder.append(line);
         }
         builder.append("\n");
-
+        inputOrErrorStream.close();
         Log.d("HttpURLConnectionPost", " " + builder);
+    }
+
+    private void httpUrlConnectionPostWithoutRead() throws IOException {
+        URL url = new URL("http://httpbin.org/post");
+        HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+        httpURLConnection.setDoOutput(true);
+
+        OutputStreamWriter out = new OutputStreamWriter(httpURLConnection.getOutputStream());
+        out.write("Output test content");
+        out.close();
     }
 
     private void httpsUrlConnectionPost() throws IOException {
@@ -545,7 +602,7 @@ public class MainActivity extends AppCompatActivity {
             builder.append(line);
         }
         builder.append("\n");
-
+        inputOrErrorStream.close();
         Log.d("HttpsURLConnectionPost", " " + builder);
     }
 
@@ -603,4 +660,28 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, "Button Clicked", Toast.LENGTH_LONG).show();//display the text of button1
     }
 
+
+    private static Span getSpan() {
+        return GlobalOpenTelemetry.getTracer("TestTracer").spanBuilder("A Span").startSpan();
+    }
+
+    private static void setUpInMemorySpanExporter() {
+        spanExporter = InMemorySpanExporter.create();
+        OpenTelemetrySdk.builder()
+                .setTracerProvider(getSimpleTracerProvider(spanExporter))
+                .buildAndRegisterGlobal();
+    }
+
+    @NonNull
+    private static SdkTracerProvider getSimpleTracerProvider(InMemorySpanExporter spanExporter) {
+        return SdkTracerProvider.builder()
+                .addSpanProcessor(SimpleSpanProcessor.create(spanExporter))
+                .build();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        spanExporter.reset();
+    }
 }
